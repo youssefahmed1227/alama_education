@@ -1,0 +1,6 @@
+{
+  "name": "علامة | تحدي المعرفة",
+  "description": "برنامج مسابقات تعليمية تفاعلية للمدارس المصرية - الصف الثالث الإعدادي - مادة الدراسات الاجتماعية",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

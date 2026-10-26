@@ -11,33 +11,64 @@ export type QuestionType =
   | 'historical_figure'  // شخصيات وتواريخ وأحداث
   | 'comparison'         // مقارنة بين السلالات / الأقاليم / المعارك
   | 'deduction'          // استنتاج جغرافي أو تاريخي
+  | 'odd_one_out'        // استبعاد الكلمة غير المناسبة / الكلمة الشاذة
+  | 'fill_blank'          // أكمل العبارة / إكمال الفراغ
+  | 'map_identification' // أسئلة الخريطة وتحديد الظواهر الجغرافية
+  | 'who_did_this'       // من صاحب هذا العمل؟
+  | 'what_is_the_event'  // ما هو الحدث التاريخي؟
+  | 'explanation_prompt' // ما التفسير؟ (تفسير الحدث أو الظاهرة)
   | 'review';            // مراجعة شاملة
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
-export type ReviewStatus = 'draft' | 'verified';
+export type ReviewStatus = 'verified' | 'unreviewed' | 'needs_revision';
+
+export type SourceType =
+  | 'curriculum_book'
+  | 'official_exam'
+  | 'educational_platform'
+  | 'original_curriculum_based';
 
 export interface Question {
   id: string;
   text: string;
   type: QuestionType;
-  options?: string[];
+  options: string[]; // exactly 4 choices for multiple choice
   correctAnswer: string | string[]; // Single string answer or array of strings for ordering
   explanation: string;
   difficulty: Difficulty;
-  topic: string;
   unit: string;
+  lesson: string;
+  topic: string;
+  sourceUrl?: string; // Verified link or official reference
+  sourceType: SourceType;
   reference?: string; // Book page or official syllabus reference
   reviewStatus: ReviewStatus;
 }
 
 export type GameMode = 'single' | 'two_teams' | 'multi_teams';
 
+export type ChickenSkinId =
+  | 'classic'
+  | 'king'
+  | 'scholar'
+  | 'ahmed_samir'
+  | 'astronaut'
+  | 'detective'
+  | 'captain'
+  | 'ninja'
+  | 'superhero'
+  | 'pharaoh'
+  | 'cool'
+  | 'baby'
+  | 'explorer';
+
 export interface Team {
   id: string;
   name: string;
   color: string;
   avatar: string;
+  chickenSkin?: ChickenSkinId;
   score: number;
   correctCount: number;
   wrongCount: number;

@@ -3,9 +3,11 @@
  * Custom player / team name inputs with avatars and colors
  */
 
-import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, Users, User, Shield, Sparkles } from 'lucide-react';
-import { GameMode, Team } from '../types';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, ArrowLeft, Users, User, Shield, Sparkles, Wand2 } from 'lucide-react';
+import { GameMode, Team, ChickenSkinId } from '../types';
+import { CHICKEN_SKINS, getSkinById } from '../data/chickenSkins';
+import { isSecretPlayerName } from '../services/easterEgg';
 
 interface TeamSetupScreenProps {
   mode: GameMode;
@@ -33,8 +35,23 @@ export const TeamSetupScreen: React.FC<TeamSetupScreenProps> = ({
 }) => {
   const [localTeams, setLocalTeams] = useState<Team[]>(teams);
 
+  useEffect(() => {
+    // Ensure all teams have a chickenSkin default
+    const withSkins = teams.map((t, i) => ({
+      ...t,
+      chickenSkin: t.chickenSkin || CHICKEN_SKINS[i % CHICKEN_SKINS.length].id,
+    }));
+    setLocalTeams(withSkins);
+  }, [teams]);
+
   const handleNameChange = (id: string, newName: string) => {
     const updated = localTeams.map((t) => (t.id === id ? { ...t, name: newName } : t));
+    setLocalTeams(updated);
+    onUpdateTeams(updated);
+  };
+
+  const handleSkinChange = (id: string, chickenSkin: ChickenSkinId) => {
+    const updated = localTeams.map((t) => (t.id === id ? { ...t, chickenSkin } : t));
     setLocalTeams(updated);
     onUpdateTeams(updated);
   };
@@ -152,6 +169,45 @@ export const TeamSetupScreen: React.FC<TeamSetupScreenProps> = ({
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl select-none">
                     {team.avatar}
                   </div>
+                </div>
+              </div>
+
+              {/* Chicken Skin Selector */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-amber-300">
+                    مظهر الكتكوت (Chicken Skin):
+                  </label>
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {getSkinById(team.chickenSkin).title}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1 bg-slate-950/40 rounded-xl border border-slate-800">
+                  {CHICKEN_SKINS.map((skin) => {
+                    const isSelected = (team.chickenSkin || 'classic') === skin.id;
+                    return (
+                      <button
+                        key={skin.id}
+                        type="button"
+                        onClick={() => handleSkinChange(team.id, skin.id)}
+                        className={`p-2 rounded-xl border text-right transition-all flex items-center gap-2 ${
+                          isSelected
+                            ? 'border-amber-400 bg-amber-400/15 shadow-md shadow-amber-500/10 ring-1 ring-amber-400 scale-[1.02]'
+                            : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <span className="text-xl shrink-0 p-1 bg-slate-900 rounded-lg">{skin.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className={`text-xs font-bold truncate ${isSelected ? 'text-amber-300' : 'text-slate-300'}`}>
+                            {skin.name}
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">
+                            {skin.badge}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -3,16 +3,20 @@
  * Celebratory classroom screen with mascot flock, confetti, stats, and review options
  */
 
-import React, { useEffect } from 'react';
-import { Trophy, Award, RotateCcw, Eye, Printer, Download, Sparkles, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Trophy, Award, RotateCcw, Eye, Printer, Download, Sparkles, CheckCircle2, XCircle, Clock, Lightbulb, Volume2 } from 'lucide-react';
 import { Team, RoundAnswerRecord, GameMode } from '../types';
-import { ChickFlock } from './ChickMascot';
+import { ChickFlock, ChickMascot, mapGameEventToAnimationState } from './ChickMascot';
+import { YoussefChicksCelebration } from './YoussefChicksCelebration';
+import { isYoussefWinner } from '../services/easterEgg';
 import { soundEngine } from '../services/audio';
+import { getRandomFact, DidYouKnowFact } from '../data/didYouKnowData';
 
 interface FinalScoreScreenProps {
   mode: GameMode;
   teams: Team[];
   answers: RoundAnswerRecord[];
+  reducedMotion?: boolean;
   onPlayAgain: () => void;
   onReviewAnswers: () => void;
   onGoHome: () => void;
@@ -22,17 +26,24 @@ export const FinalScoreScreen: React.FC<FinalScoreScreenProps> = ({
   mode,
   teams,
   answers,
+  reducedMotion = false,
   onPlayAgain,
   onReviewAnswers,
   onGoHome,
 }) => {
   // Sort teams by score descending
   const sorted = [...teams].sort((a, b) => b.score - a.score);
-  const isTie = sorted.length > 1 && sorted[0].score === sorted[1].score && sorted[0].score > 0;
+  const isTie = sorted.length > 1 && sorted[0].score === sorted[1].score;
   const winner = sorted[0];
+  const hasYoussefWon = isYoussefWinner(winner?.name, isTie);
+  const [finalFact, setFinalFact] = useState<DidYouKnowFact>(() => getRandomFact());
 
   useEffect(() => {
     soundEngine.playVictory();
+    const t = setTimeout(() => {
+      soundEngine.playCrownSparkle();
+    }, 1200);
+    return () => clearTimeout(t);
   }, []);
 
   const handlePrint = () => {
@@ -64,12 +75,24 @@ export const FinalScoreScreen: React.FC<FinalScoreScreenProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 text-center select-none">
+      {/* Special Youssef Victory Easter Egg & Leaping Chicks */}
+      {hasYoussefWon && (
+        <YoussefChicksCelebration
+          winnerName={winner.name}
+          isTie={isTie}
+          reducedMotion={reducedMotion}
+        />
+      )}
+
       {/* Victory Celebration Flock of Chicks */}
       <ChickFlock
-        count={5}
+        count={hasYoussefWon ? 3 : 5}
+        state={mapGameEventToAnimationState('victory')}
         message={
           isTie
             ? 'تعادل بطولي بين الفريقين! أداء أسطوري 🐥🎉'
+            : hasYoussefWon
+            ? `أداء استثنائي يا يوسف! كأس البطولة لك 🐥🏆`
             : mode === 'single'
             ? `مبروك يا بطل! ${winner.name} 🐥🏆`
             : `الفائز بالبطولة: ${winner.name} 🐥🏆`
@@ -80,8 +103,28 @@ export const FinalScoreScreen: React.FC<FinalScoreScreenProps> = ({
       <div className="my-6 bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-amber-400 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-1/2 translate-x-1/2 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center border-2 border-amber-400 shadow-lg">
-          <Trophy className="w-10 h-10 md:w-12 md:h-12 fill-amber-400" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-4">
+          <div className="transform hover:scale-105 transition-transform">
+            <ChickMascot
+              model="king"
+              hasCrown={true}
+              isVictory={true}
+              size="lg"
+              state="cheering"
+              message={
+                isTie
+                  ? 'تاج التفوق لكل الأبطال! 👑'
+                  : hasYoussefWon
+                  ? 'عرش المسابقة ليوسف! 👑🏆'
+                  : `تتويج بطل المسابقة: ${winner.name}! 👑`
+              }
+              animate={!reducedMotion}
+              interactive={true}
+            />
+          </div>
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center border-2 border-amber-400 shadow-lg shrink-0">
+            <Trophy className="w-10 h-10 md:w-12 md:h-12 fill-amber-400" />
+          </div>
         </div>
 
         <h2 className="text-2xl md:text-4xl font-black text-white mb-2">
@@ -162,6 +205,53 @@ export const FinalScoreScreen: React.FC<FinalScoreScreenProps> = ({
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* "Did You Know?" Round Completion Bonus Fact */}
+      <div className="mt-6 p-4 md:p-5 bg-gradient-to-r from-amber-500/15 via-yellow-500/25 to-amber-500/15 border-2 border-amber-400/50 rounded-3xl shadow-lg relative text-right flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 shrink-0 bg-amber-400/20 border border-amber-400 rounded-2xl flex items-center justify-center text-2xl">
+            {finalFact.emoji}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-amber-400 font-black text-sm flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span>هل تعلم ختامية للجولة:</span>
+              </span>
+              <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full text-[11px] font-bold border border-amber-400/30">
+                {finalFact.badge}
+              </span>
+            </div>
+            <p className="text-sm md:text-base font-bold text-white leading-relaxed">
+              {finalFact.fact}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button
+            type="button"
+            onClick={() => soundEngine.speakText(finalFact.fact)}
+            className="p-2 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 transition-colors flex items-center gap-1 text-xs font-bold"
+            title="استمع للمعلومة صوتياً"
+          >
+            <Volume2 className="w-4 h-4" />
+            <span className="hidden md:inline">استمع</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFinalFact(getRandomFact());
+              soundEngine.playChirp();
+            }}
+            className="p-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black transition-colors flex items-center gap-1 text-xs shadow"
+            title="معلومة أخرى"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>معلومة أخرى 🎲</span>
+          </button>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { ActiveScreen, GameMode, GameSettings, Question, RoundAnswerRecord, RoundHistory, Team } from './types';
 import { DEFAULT_SETTINGS, StorageService } from './services/storage';
 import { soundEngine } from './services/audio';
+import { isSecretPlayerName, applySecretPlayerMode } from './services/easterEgg';
 
 // Components
 import { Navbar } from './components/Navbar';
@@ -154,35 +155,56 @@ export default function App() {
   const handleStartGame = () => {
     soundEngine.playClick();
 
-    // 1. Filter by topics if specified
-    let pool = [...questionsBank];
-    if (settings.selectedTopics.length > 0) {
-      pool = pool.filter((q) => settings.selectedTopics.includes(q.topic));
-    }
+    // Check Secret Player Name Easter Egg:
+    // If any team/player has typed the secret name (e.g. "يوسف"):
+    // "they get all easy questions and all answers are a only the secret name"
+    const secretTeam = teams.find((t) => isSecretPlayerName(t.name));
 
-    // 2. Filter by difficulty if specified
-    if (settings.difficulty !== 'all') {
-      const diffPool = pool.filter((q) => q.difficulty === settings.difficulty);
-      if (diffPool.length >= 5) {
-        pool = diffPool;
+    if (secretTeam) {
+      let easyPool = questionsBank.filter((q) => q.difficulty === 'easy');
+      if (easyPool.length === 0) {
+        easyPool = [...questionsBank];
       }
-    }
+      const shuffled = [...easyPool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const selected = shuffled.slice(0, Math.min(settings.questionCount, shuffled.length));
+      const secretName = secretTeam.name.trim() || 'يوسف';
+      const secretQuestions = applySecretPlayerMode(selected, secretName);
+      setRoundQuestions(secretQuestions);
+    } else {
+      // 1. Filter by topics if specified
+      let pool = [...questionsBank];
+      if (settings.selectedTopics.length > 0) {
+        pool = pool.filter((q) => settings.selectedTopics.includes(q.topic));
+      }
 
-    // Fallback if filter too restrictive
-    if (pool.length === 0) {
-      pool = [...questionsBank];
-    }
+      // 2. Filter by difficulty if specified
+      if (settings.difficulty !== 'all') {
+        const diffPool = pool.filter((q) => q.difficulty === settings.difficulty);
+        if (diffPool.length >= 5) {
+          pool = diffPool;
+        }
+      }
 
-    // 3. Shuffle thoroughly (Fisher-Yates) to ensure zero repetition in the round
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+      // Fallback if filter too restrictive
+      if (pool.length === 0) {
+        pool = [...questionsBank];
+      }
 
-    // 4. Slice to requested questionCount (10, 20, 30)
-    const selected = shuffled.slice(0, Math.min(settings.questionCount, shuffled.length));
-    setRoundQuestions(selected);
+      // 3. Shuffle thoroughly (Fisher-Yates) to ensure zero repetition in the round
+      const shuffled = [...pool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      // 4. Slice to requested questionCount (10, 20, 30)
+      const selected = shuffled.slice(0, Math.min(settings.questionCount, shuffled.length));
+      setRoundQuestions(selected);
+    }
 
     // Reset team scores and stats for the new round
     const resetTeams = teams.map((t) => ({
@@ -329,6 +351,7 @@ export default function App() {
             mode={gameMode}
             teams={teams}
             answers={roundAnswers}
+            reducedMotion={settings.reducedMotion}
             onPlayAgain={handlePlayAgain}
             onReviewAnswers={handleReviewCurrentRound}
             onGoHome={() => setActiveScreen('home')}

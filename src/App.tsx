@@ -178,7 +178,9 @@ export default function App() {
       // 1. Filter by topics if specified
       let pool = [...questionsBank];
       if (settings.selectedTopics.length > 0) {
-        pool = pool.filter((q) => settings.selectedTopics.includes(q.topic));
+        pool = pool.filter((q) =>
+          settings.selectedTopics.some((t) => q.topic === t || q.topic.includes(t) || t.includes(q.topic))
+        );
       }
 
       // 2. Filter by difficulty if specified
@@ -203,7 +205,21 @@ export default function App() {
 
       // 4. Slice to requested questionCount (10, 20, 30)
       const selected = shuffled.slice(0, Math.min(settings.questionCount, shuffled.length));
-      setRoundQuestions(selected);
+
+      // Vary the options positions so answers are distributed dynamically across 2nd, 3rd, 4th, and 1st
+      const dynamicQuestions = selected.map((q) => {
+        if (q.type === 'ordering' || q.type === 'true_false' || !q.options || q.options.length !== 4) {
+          return q;
+        }
+        const optCopy = [...q.options];
+        for (let i = optCopy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [optCopy[i], optCopy[j]] = [optCopy[j], optCopy[i]];
+        }
+        return { ...q, options: optCopy };
+      });
+
+      setRoundQuestions(dynamicQuestions);
     }
 
     // Reset team scores and stats for the new round

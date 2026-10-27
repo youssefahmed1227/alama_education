@@ -116,7 +116,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setShowLoseScreen(false);
     setDefeatedTeam(null);
     setLoseReason('');
-    setMascotState(mapGameEventToAnimationState('idle'));
+    // Dynamically switch mascot to 'thinking' while timer runs / question is active
+    setMascotState('thinking');
 
     // Did You Know fact is strictly displayed in the dedicated box on screen, NOT in the chicken bubble!
     setMascotMessage(undefined);
@@ -160,6 +161,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     if (settings.timePerQuestion > 0) {
       if (timerRef.current) clearInterval(timerRef.current);
 
+      // Thinking animation while timer counts down
+      setMascotState('thinking');
+
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
@@ -167,14 +171,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             handleTimeout();
             return 0;
           }
+          // Keep mascot thinking while timer runs
+          setMascotState('thinking');
           // Escalating tense ticking & warning audio when time hits 20s or below
           if (prev <= 20) {
             soundEngine.playUrgentCountdown(prev);
-            setMascotState('thinking');
           }
           return prev - 1;
         });
       }, 1000);
+    } else {
+      setMascotState('thinking');
     }
 
     return () => {
@@ -230,6 +237,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     if (settings.timePerQuestion <= 0) return;
     if (timerRef.current) clearInterval(timerRef.current);
 
+    // Keep mascot dynamically in 'thinking' state while timer runs
+    setMascotState('thinking');
+
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -237,9 +247,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
           handleTimeout();
           return 0;
         }
+        // Keep mascot thinking while timer is running
+        setMascotState('thinking');
         if (prev <= 20) {
           soundEngine.playUrgentCountdown(prev);
-          setMascotState('thinking');
         }
         return prev - 1;
       });
@@ -291,7 +302,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       setLoseReason(
         `انتهى الوقت ووصل العداد إلى الصفر! خسر فريق (${timedOutTeam.name}) فرصة هذا السؤال، والفرصة جاهزة للخطف من قِبل (${otherTeam.name})!`
       );
-      setMascotState(mapGameEventToAnimationState('timeout'));
+      setMascotState('wobbling');
       setShowLoseScreen(true);
       soundEngine.playTimeout();
       soundEngine.playWrong();
@@ -306,7 +317,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     setStreak(0);
     setShowSuccessSparkles(false);
     setFloatingScore(null);
-    setMascotState(mapGameEventToAnimationState('timeout'));
+    setMascotState('wobbling');
 
     const reason =
       currentTeams.length === 1
@@ -381,24 +392,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         text: isStealTurn ? `+${points} خطف ناجح! ⚡` : `+${points} نقطة مستحقة! 🌟`,
       });
 
+      // Switch chicken mascot dynamically to 'cheering' on correct answers
+      setMascotState('cheering');
+
       if (isStealTurn) {
         soundEngine.playCorrect();
         soundEngine.playStreakSound();
-        setMascotState('cheering');
         setMascotMessage(`خطف رائع للسؤال! 🎯 فريق (${activeTeam.name}) يقتنص النقاط ببراعة! 🐥👑`);
       } else if (nextStreak >= 3) {
         soundEngine.playStreakSound();
-        setMascotState('cheering');
         setMascotModel('king');
         setMascotMessage(`سلسلة نارية أسطورية! 🔥 ${nextStreak} إجابات متتالية صحيحة! 👑`);
       } else if (nextStreak === 2) {
         soundEngine.playCorrect();
-        setMascotState('jumping');
         setMascotModel('cool');
         setMascotMessage('ثنائية رائعة! الكتكوت يرتدي نظارة الأبطال 😎✨');
       } else {
         soundEngine.playCorrect();
-        setMascotState(mapGameEventToAnimationState('correct_answer'));
         const cheers = [
           'إجابة صحيحة! أحسنت يا بطل! 🐥⭐',
           'ممتاز! نقطة مستحقة لفريقك 🌟',
@@ -411,7 +421,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
       points = settings.wrongPenalty; // usually 0 or negative if penalty enabled
       setShowSuccessSparkles(false);
       setFloatingScore(null);
-      setMascotState(mapGameEventToAnimationState('wrong_answer'));
+      // Switch chicken mascot dynamically to 'wobbling' on incorrect answers
+      setMascotState('wobbling');
 
       // Return to subject model
       if (currentQ.type === 'map_identification' || currentQ.unit.includes('جغرافيا')) {

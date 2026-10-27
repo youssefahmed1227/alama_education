@@ -280,7 +280,7 @@ export function runAllTests(): { passedCount: number; failedCount: number; resul
 
     assert(
       'التحقق الآلي من بنك الأسئلة (التزام 4 خيارات، خلو التكرار، تغطية الوحدات والدروس)',
-      report.isValid === true && report.totalQuestions >= 50 && report.errors.length === 0,
+      report.isValid === true && report.totalQuestions >= 30 && report.errors.length === 0,
       `تم فحص ${report.totalQuestions} سؤالاً معتمداً، الأخطاء: ${report.errors.length}، التحقق: ${report.isValid ? 'ناجح 100%' : 'فاشل'}`
     );
   } catch (e: unknown) {

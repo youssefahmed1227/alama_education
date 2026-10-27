@@ -64,7 +64,11 @@ export class StorageService {
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        // Merge updated verified bank with any teacher-added custom questions
+        const verifiedIds = new Set(INITIAL_CURRICULUM_QUESTIONS.map((q) => q.id));
+        const customQuestions = parsed.filter((q: Question) => !verifiedIds.has(q.id));
+        const merged = [...INITIAL_CURRICULUM_QUESTIONS, ...customQuestions];
+        return merged;
       }
     } catch {
       // corrupt data

@@ -223,7 +223,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
             </button>
           </div>
           <p className="text-xs text-slate-400 mb-4">
-            يمكنك حصر الجولة في درس محدد (مثل الدرس الأول: السلالات البشرية) أو دمج موضوعات التاريخ والجغرافيا
+            يمكنك حصر الجولة في موضوع محدد (مثل تضاريس أمريكا الشمالية أو حروب محمد علي) أو دمج موضوعات التاريخ والجغرافيا
           </p>
 
           <div className="flex flex-wrap gap-2">

@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { soundEngine } from '../services/audio';
 import { getRandomChickDialogue } from '../data/chickDialogues';
 
-export type ChickAnimationState = 'idle' | 'jumping' | 'cheering' | 'thinking';
+export type ChickAnimationState = 'idle' | 'jumping' | 'cheering' | 'thinking' | 'wobbling';
 
 export type ChickModel =
   | 'classic'
@@ -36,15 +36,17 @@ export type GameAnimationEvent =
   | 'wrong'
   | 'idle'
   | 'thinking'
+  | 'wobbling'
   | 'celebration'
   | 'streak';
 
 /**
- * Helper function that maps specific game events to the 4 chicken animation states:
+ * Helper function that maps specific game events to the chicken animation states:
  * - 'correct_answer' / 'correct' -> 'jumping'
  * - 'victory' / 'celebration' / 'streak' -> 'cheering'
  * - 'wrong_answer' / 'wrong' / 'timeout' -> 'thinking'
- * - 'idle' / default             -> 'idle'
+ * - 'wobbling' / 'wobble' / 'incorrect'  -> 'wobbling'
+ * - 'idle' / default                     -> 'idle'
  */
 export function mapGameEventToAnimationState(event: GameAnimationEvent | string): ChickAnimationState {
   switch (event) {
@@ -56,6 +58,10 @@ export function mapGameEventToAnimationState(event: GameAnimationEvent | string)
     case 'cheering':
     case 'streak':
       return 'cheering';
+    case 'wobbling':
+    case 'wobble':
+    case 'incorrect':
+      return 'wobbling';
     case 'wrong_answer':
     case 'wrong':
     case 'timeout':
@@ -156,6 +162,8 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
         return 'animate-chick-cheering';
       case 'thinking':
         return 'animate-chick-thinking';
+      case 'wobbling':
+        return 'animate-chick-wobble';
       case 'idle':
       default:
         return 'animate-chick-idle';
@@ -593,6 +601,8 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
                       ? 'translate(132, 94) rotate(10)'
                       : effectiveState === 'thinking'
                       ? 'translate(120, 118) rotate(-4)'
+                      : effectiveState === 'wobbling'
+                      ? 'translate(126, 128) rotate(-16)'
                       : 'translate(124, 122) rotate(-8)'
                   }
                   className="transition-transform duration-300"
@@ -684,6 +694,22 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
                 {/* Right Wing scratching cheek / chin thoughtfully */}
                 <path
                   d="M172 135 C185 110, 150 95, 128 118 C124 124, 132 132, 138 126 C150 114, 165 120, 168 138 Z"
+                  fill="#F59E0B"
+                  stroke="#D97706"
+                  strokeWidth="3.5"
+                />
+              </g>
+            ) : effectiveState === 'wobbling' ? (
+              <g>
+                {/* Drooping flustered trembling wings */}
+                <path
+                  d="M48 134 C26 138, 22 165, 42 168 C48 168, 52 152, 48 134 Z"
+                  fill="#F59E0B"
+                  stroke="#D97706"
+                  strokeWidth="3.5"
+                />
+                <path
+                  d="M172 134 C194 138, 198 165, 178 168 C172 168, 168 152, 172 134 Z"
                   fill="#F59E0B"
                   stroke="#D97706"
                   strokeWidth="3.5"
@@ -948,6 +974,33 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
               <path d="M68 88 Q80 80 92 86" stroke="#B45309" strokeWidth="3" strokeLinecap="round" fill="none" />
               <path d="M128 86 Q140 80 152 88" stroke="#B45309" strokeWidth="3" strokeLinecap="round" fill="none" />
             </g>
+          ) : effectiveState === 'wobbling' ? (
+            <g>
+              {/* Comical dizzy spiral / swirling stunned eyes */}
+              <g transform="translate(80, 106)">
+                <ellipse cx="0" cy="0" rx="14" ry="16" fill="#FFFFFF" stroke="#D97706" strokeWidth="2.5" />
+                <path
+                  d="M0 0 A2 2 0 0 1 2 2 A4 4 0 0 1 -2 4 A6 6 0 0 1 -6 -2 A8 8 0 0 1 2 -8 A10 10 0 0 1 10 2"
+                  stroke="#1E293B"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </g>
+              <g transform="translate(140, 106)">
+                <ellipse cx="0" cy="0" rx="14" ry="16" fill="#FFFFFF" stroke="#D97706" strokeWidth="2.5" />
+                <path
+                  d="M0 0 A2 2 0 0 1 -2 -2 A4 4 0 0 1 2 -4 A6 6 0 0 1 6 2 A8 8 0 0 1 -2 8 A10 10 0 0 1 -10 -2"
+                  stroke="#1E293B"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </g>
+              {/* Wobbly confused eyebrows */}
+              <path d="M68 85 Q78 92 90 85" stroke="#B45309" strokeWidth="3" strokeLinecap="round" fill="none" />
+              <path d="M130 85 Q142 92 152 85" stroke="#B45309" strokeWidth="3" strokeLinecap="round" fill="none" />
+            </g>
           ) : (
             <g>
               {/* Big Adorable Pixar/Chibi Eyes with Double Specular Highlights */}
@@ -1053,6 +1106,17 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
                 strokeWidth="2.5"
               />
               <path d="M100 115 Q110 113 118 116" stroke="#FEF08A" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            </g>
+          ) : effectiveState === 'wobbling' ? (
+            <g>
+              {/* Comical wavy wobbly disappointed beak */}
+              <path
+                d="M95 120 Q102 114 110 120 Q118 126 125 120"
+                stroke="#C2410C"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                fill="none"
+              />
             </g>
           ) : (
             <g>
@@ -1407,6 +1471,15 @@ export const ChickMascot: React.FC<ChickMascotProps> = ({
               ❓
             </span>
           </>
+        )}
+
+        {/* Dizzy indicators for wobbling state on incorrect answers */}
+        {effectiveState === 'wobbling' && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-lg select-none pointer-events-none animate-bounce">
+            <span>💫</span>
+            <span>😵</span>
+            <span>💫</span>
+          </div>
         )}
       </div>
     </div>
